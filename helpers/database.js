@@ -92,9 +92,7 @@ async function compararArraysDeObjetos(array1, array2, id) {
       if (Object.keys(diff).length > 0) {
         diferencias.push(diff);
       }
-    } else {
-      diferencias.push(objeto1);
-    }
+    } 
   }
 
   return diferencias;
@@ -114,10 +112,17 @@ async function compararObjetos(objeto1, objeto2, id_key) {
 
     if (key === "NOTAS_COMPRAS" && valor1) {
       valor1 = await getBlobData(valor1);
-      valor2 = await getBlobData(valor2);
-    } else if (key === "NOTAS_VENTAS" && valor2) {
+      
+    }
+    if (key === "NOTAS_COMPRAS" && valor2){
+      valor2 = await getBlobData(valor2); 
+    }
+     
+    if (key === "NOTAS_VENTAS" && valor1) {
       valor1 = await getBlobData(valor1);
-      valor2 = await getBlobData(valor2);
+    }
+    if (key === "NOTAS_VENTAS" && valor2) {
+      valor2 = await getBlobData(valor2); 
     }
 
     if (
@@ -125,7 +130,7 @@ async function compararObjetos(objeto1, objeto2, id_key) {
       !key.includes("FECHA") &&
       key != "ES_CLAVE_EMPAQUE"
     ) {
-      console.log({ valor1, valor2, key });
+      console.log({valor1, valor2, key})
       diff[key] = valor2;
       diff[id_key] = objeto1[id_key];
     }

@@ -10,9 +10,10 @@ const {
 
 const main = async () => {
   try {
+    console.log("empieza")
     const dbMicrosip = await connect(msDatabase);
     const dbJcontrol = await connect(jcDatabase);
-
+    console.log("cons")
     const gruposLineasMicrosip = await query(
       dbMicrosip,
       `SELECT * FROM GRUPOS_LINEAS;`
@@ -48,6 +49,7 @@ const main = async () => {
       const query_str = objectToSqlInsertArticulo("grupos_lineas", missing);
       await query(dbJcontrol, query_str);
     }
+    console.log("termina grupos")
     const lineasMicrosip = await query(
       dbMicrosip,
       `SELECT * FROM LINEAS_ARTICULOS;`
@@ -84,7 +86,7 @@ const main = async () => {
       const query_str = objectToSqlInsertArticulo("lineas_articulos", missing);
       await query(dbJcontrol, query_str);
     }
-
+    console.log("termina lineas")
     const articulosMicrosip = await query(
       dbMicrosip,
       `SELECT * FROM ARTICULOS;`
@@ -129,6 +131,7 @@ const main = async () => {
       const query_str = objectToSqlInsertArticulo("articulos", missing);
       await query(dbJcontrol, query_str);
     }
+    console.log("termina articulos")
     const rolesClavesMicrosip = await query(
       dbMicrosip,
       `SELECT * FROM ROLES_CLAVES_ARTICULOS;`
@@ -167,7 +170,7 @@ const main = async () => {
       );
       await query(dbJcontrol, query_str);
     }
-
+    console.log("termina roles c")
     const ClavesMicrosip = await query(
       dbMicrosip,
       `SELECT * FROM CLAVES_ARTICULOS;`
@@ -202,6 +205,10 @@ const main = async () => {
       const query_str = objectToSqlInsertArticulo("CLAVES_ARTICULOS", missing);
       await query(dbJcontrol, query_str);
     }
+    console.log("termina todo")
+    await dbMicrosip.detach()
+    await dbJcontrol.detach()
+    console.log({missing_articulos, missing_claves, missing_grupos_lineas, missing_lineas, missing_rolesClaves, dif_Claves, dif_articulos, dif_grupos_lineas, dif_lineas, dif_rolesClaves})
     console.log("done");
   } catch (error) {
     console.log({ error });
@@ -246,4 +253,4 @@ const query = (db, query) => {
 };
 main();
 
-setInterval(main, 5000);
+setInterval(main, 300000);
