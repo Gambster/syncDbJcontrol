@@ -140,7 +140,12 @@ async function compararObjetos(objeto1, objeto2, id_key, auxObj) {
       const jcontrolValue = auxObj[key].find(
         (elm) => elm[key + "_MICROSIP"] == valor2
       )?.[key];
-      if (jcontrolValue != valor1) diff[key] = jcontrolValue;
+      if (jcontrolValue != valor1){
+        //console.log({id_key, jcontrolValue, valor1})
+        diff[key] = jcontrolValue;
+        diff[id_key] = objeto1[id_key];
+      diff[id_key + "_MICROSIP"] = objeto1[id_key + "_MICROSIP"];
+      } 
     }
   }
 

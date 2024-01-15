@@ -1,10 +1,10 @@
 const firebirdConfig = {
-  host: "127.0.0.1",
-  port: 3050,
-  database: "/private/tmp/firebird/JEGR.fdb",
-  user: "sysdba",
-  password: "gerardo132",
-  role: "RDB$ADMIN",
+  host: '192.168.100.21',
+  port: 3050, 
+  database: 'C:/Microsip datos/PRUEBAS.fdb',
+  user: 'JCONTROL',
+  password: 'JC0ntr0l',
+  role: 'RDB$ADMIN'
 };
 
 module.exports = firebirdConfig;

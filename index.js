@@ -108,6 +108,7 @@ const main = async () => {
       }
     );
 
+
     await createRows(
       missing_lineas,
       "lineas_articulos",
@@ -273,7 +274,7 @@ const main = async () => {
       "CLAVE_ARTICULO_ID"
     );
     await updateRows(
-      dif_grupos_lineas,
+      dif_Claves,
       "CLAVES_ARTICULOS",
       "CLAVE_ARTICULO_ID",
       dbJcontrol
@@ -458,7 +459,7 @@ const main = async () => {
 
     for (const user of missing_usuarios) {
       await query(
-        dbJcontrol`CREATE USER ${user.SEC$USER_NAME} PASSWORD 'JC0ntr0L' FIRSTNAME '${user.SEC$FIRST_NAME}' LASTNAME '${user.SEC$LAST_NAME}' GRANT ADMIN ROLE;`
+        dbJcontrol,`CREATE USER ${user.SEC$USER_NAME} PASSWORD 'JC0ntr0L' FIRSTNAME '${user.SEC$FIRST_NAME}' LASTNAME '${user.SEC$LAST_NAME}' GRANT ADMIN ROLE;`
       );
     }
 
