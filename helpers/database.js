@@ -18,8 +18,6 @@ function objectToSqlInsertArticulo(tableName, obj) {
         // return `CONVERT(DATE,SUBSTRING('${value}',0, 11),105)`
       } else if (value === null) {
         return "NULL";
-      } else if (typeof value === "boolean") {
-        return value ? "'S'" : "'N'";
       } else if (typeof value === "string") {
         return `'${value.replace(/'/g, "''")}'`;
       } else {
@@ -48,8 +46,6 @@ function objectToSqlUpdateArticulo(tableName, obj, condition) {
         return `${key} = TIMESTAMP '${format_iso_date(value)}'`;
       } else if (value === null) {
         return `${key} = NULL`;
-      } else if (typeof value === "boolean") {
-        return `${key} = ${value ? "'S'" : "'N'"}`;
       } else if (typeof value === "string") {
         return `${key} = '${value.replace(/'/g, "''")}'`;
       } else {
@@ -81,24 +77,24 @@ function format_iso_date(dateString) {
   return false;
 }
 
-async function compararArraysDeObjetos(array1, array2, id) {
+async function compararArraysDeObjetos(array1, array2, id, auxObj) {
   const diferencias = [];
 
   for (const objeto1 of array1) {
-    const objeto2 = array2.find((o) => o[id] === objeto1[id]); // Asumiendo que los objetos tienen una propiedad 'id' única
+    const objeto2 = array2.find((o) => o[id] === objeto1[id + "_MICROSIP"]);
 
     if (objeto2) {
-      const diff = await compararObjetos(objeto1, objeto2, id);
+      const diff = await compararObjetos(objeto1, objeto2, id, auxObj);
       if (Object.keys(diff).length > 0) {
         diferencias.push(diff);
       }
-    } 
+    }
   }
 
   return diferencias;
 }
 
-async function compararObjetos(objeto1, objeto2, id_key) {
+async function compararObjetos(objeto1, objeto2, id_key, auxObj) {
   const keys1 = Object.keys(objeto1);
   const keys2 = Object.keys(objeto2);
 
@@ -112,27 +108,39 @@ async function compararObjetos(objeto1, objeto2, id_key) {
 
     if (key === "NOTAS_COMPRAS" && valor1) {
       valor1 = await getBlobData(valor1);
-      
     }
-    if (key === "NOTAS_COMPRAS" && valor2){
-      valor2 = await getBlobData(valor2); 
+    if (key === "NOTAS_COMPRAS" && valor2) {
+      valor2 = await getBlobData(valor2);
     }
-     
+
     if (key === "NOTAS_VENTAS" && valor1) {
       valor1 = await getBlobData(valor1);
     }
     if (key === "NOTAS_VENTAS" && valor2) {
-      valor2 = await getBlobData(valor2); 
+      valor2 = await getBlobData(valor2);
     }
 
     if (
       valor1 != valor2 &&
       !key.includes("FECHA") &&
-      key != "ES_CLAVE_EMPAQUE"
+      !key.includes("MICROSIP") &&
+      key != id_key &&
+      !key.toLowerCase().includes("_id")
     ) {
-      console.log({valor1, valor2, key})
       diff[key] = valor2;
       diff[id_key] = objeto1[id_key];
+      diff[id_key + "_MICROSIP"] = objeto1[id_key + "_MICROSIP"];
+    } else if (
+      key.toLowerCase().includes("_id") &&
+      !key.includes("MICROSIP") &&
+      key != id_key &&
+      auxObj &&
+      key != "CONJUNTO_SUCURSALES_ID"
+    ) {
+      const jcontrolValue = auxObj[key].find(
+        (elm) => elm[key + "_MICROSIP"] == valor2
+      )?.[key];
+      if (jcontrolValue != valor1) diff[key] = jcontrolValue;
     }
   }
 
