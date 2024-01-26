@@ -23,7 +23,7 @@ const main = async () => {
 
     const gruposLineasJcontrol = await query(
       dbJcontrol,
-      `SELECT * FROM GRUPOS_LINEAS;`
+      `SELECT * FROM GRUPOS_LINEAS WHERE GRUPO_LINEA_ID_MICROSIP IS NOT NULL;`
     );
 
     const missing_grupos_lineas = gruposLineasMicrosip.filter(
@@ -75,7 +75,7 @@ const main = async () => {
 
     const lineasJcontrol = await query(
       dbJcontrol,
-      `SELECT * FROM LINEAS_ARTICULOS;`
+      `SELECT * FROM LINEAS_ARTICULOS WHERE LINEA_ARTICULO_ID_MICROSIP IS NOT NULL;`
     );
 
     let missing_lineas = lineasMicrosip.filter(
@@ -108,7 +108,6 @@ const main = async () => {
       }
     );
 
-
     await createRows(
       missing_lineas,
       "lineas_articulos",
@@ -137,7 +136,7 @@ const main = async () => {
     );
     const articulosJcontrol = await query(
       dbJcontrol,
-      `SELECT * FROM ARTICULOS;`
+      `SELECT * FROM ARTICULOS WHERE ARTICULO_ID_MICROSIP IS NOT NULL;`
     );
 
     let missing_articulos = articulosMicrosip.filter(
@@ -182,7 +181,7 @@ const main = async () => {
     );
     const rolesClavesJcontrol = await query(
       dbJcontrol,
-      `SELECT * FROM ROLES_CLAVES_ARTICULOS;`
+      `SELECT * FROM ROLES_CLAVES_ARTICULOS WHERE ROL_CLAVE_ART_ID_MICROSIP IS NOT NULL;`
     );
 
     const dif_rolesClaves = await compararArraysDeObjetos(
@@ -231,7 +230,7 @@ const main = async () => {
     );
     const ClavesJcontrol = await query(
       dbJcontrol,
-      `SELECT * FROM CLAVES_ARTICULOS;`
+      `SELECT * FROM CLAVES_ARTICULOS WHERE CLAVE_ARTICULO_ID_MICROSIP IS NOT NULL;`
     );
 
     let missing_claves = ClavesMicrosip.filter(
@@ -293,7 +292,7 @@ const main = async () => {
     );
     const tiposImpJcontrol = await query(
       dbJcontrol,
-      `SELECT * FROM TIPOS_IMPUESTOS;`
+      `SELECT * FROM TIPOS_IMPUESTOS WHERE TIPO_IMPTO_ID_MICROSIP IS NOT NULL;`
     );
 
     const missing_tipos_imp = tiposImpMicrosip.filter(
@@ -341,7 +340,7 @@ const main = async () => {
     );
     const impuestosJcontrol = await query(
       dbJcontrol,
-      `SELECT * FROM IMPUESTOS;`
+      `SELECT * FROM IMPUESTOS WHERE IMPUESTO_ID_MICROSIP IS NOT NULL;`
     );
 
     let missing_impuestos = impuestosMicrosip.filter(
@@ -384,7 +383,7 @@ const main = async () => {
     );
     const impuestosARTJcontrol = await query(
       dbJcontrol,
-      `SELECT * FROM IMPUESTOS_ARTICULOS;`
+      `SELECT * FROM IMPUESTOS_ARTICULOS WHERE IMPUESTO_ART_ID_MICROSIP IS NOT NULL;`
     );
 
     let missing_impuestos_art = impuestosArtMicrosip.filter(
@@ -439,7 +438,75 @@ const main = async () => {
       dbJcontrol
     );
 
-    // /********************** INICIA USUARIOS *********************************/
+    /********************** INICIA JUEGOS DET *********************************/
+
+    const juegosDetMicrosip = await query(
+      dbMicrosip,
+      `SELECT * FROM JUEGOS_DET;`
+    );
+    const juegosDetJcontrol = await query(
+      dbJcontrol,
+      `SELECT * FROM JUEGOS_DET WHERE COMPONENTE_ID_MICROSIP IS NOT NULL;`
+    );
+
+    let missing_juegos_det = juegosDetMicrosip.filter(
+      (elm) =>
+        !juegosDetJcontrol.some(
+          (elm2) =>
+            elm.ARTICULO_ID == elm2.ARTICULO_ID_MICROSIP &&
+            elm.COMPONENTE_ID == elm2.COMPONENTE_ID_MICROSIP
+        )
+    );
+    missing_juegos_det = missing_juegos_det.map((elm) => ({
+      ...elm,
+      ["ARTICULO_ID_MICROSIP"]: elm.ARTICULO_ID,
+      ["ARTICULO_ID"]: articulosJcontrol.find(
+        (elm2) => elm.ARTICULO_ID == elm2.ARTICULO_ID_MICROSIP
+      )?.ARTICULO_ID,
+      ["COMPONENTE_ID_MICROSIP"]: elm.COMPONENTE_ID,
+      ["COMPONENTE_ID"]: articulosJcontrol.find(
+        (elm2) => elm.COMPONENTE_ID == elm2.ARTICULO_ID_MICROSIP
+      )?.ARTICULO_ID,
+      ["CLAVE_ARTICULO_ID"]: ClavesJcontrol.find(
+        (elm2) => elm.CLAVE_ARTICULO_ID == elm2.CLAVE_ARTICULO_ID_MICROSIP
+      )?.CLAVE_ARTICULO_ID,
+    }));
+
+    const diff_juegos_det = await compararArraysDeObjetos(
+      juegosDetJcontrol,
+      juegosDetMicrosip,
+      "CLAVE_ARTICULO_ID",
+      {
+        ["ARTICULO_ID"]: articulosJcontrol,
+        ["COMPONENTE_ID"]: juegosDetJcontrol,
+        ["CLAVE_ARTICULO_ID"]: ClavesJcontrol,
+      }
+    );
+    const del_juegos_det = juegosDetJcontrol.filter(
+      (elm) =>
+        !juegosDetMicrosip.some(
+          (elm2) =>
+            elm.ARTICULO_ID_MICROSIP == elm2.ARTICULO_ID &&
+            elm.COMPONENTE_ID_MICROSIP == elm2.COMPONENTE_ID
+        )
+    );
+    if (articulosJcontrol.length > 0) {
+      await createRows(
+        missing_juegos_det,
+        "JUEGOS_DET",
+        dbJcontrol,
+        "ARTICULO_ID"
+      );
+      await updateRows(
+        diff_juegos_det,
+        "JUEGOS_DET",
+        "ARTICULO_ID",
+        dbJcontrol
+      );
+      await deleteRows(del_juegos_det, "JUEGOS_DET", "ARTICULO_ID", dbJcontrol);
+    }
+
+    /********************** INICIA USUARIOS *********************************/
 
     const usuariosMicrosip = await query(
       dbMicrosip,
@@ -459,7 +526,8 @@ const main = async () => {
 
     for (const user of missing_usuarios) {
       await query(
-        dbJcontrol,`CREATE USER ${user.SEC$USER_NAME} PASSWORD 'JC0ntr0L' FIRSTNAME '${user.SEC$FIRST_NAME}' LASTNAME '${user.SEC$LAST_NAME}' GRANT ADMIN ROLE;`
+        dbJcontrol,
+        `CREATE USER ${user.SEC$USER_NAME} PASSWORD 'JC0ntr0L' FIRSTNAME '${user.SEC$FIRST_NAME}' LASTNAME '${user.SEC$LAST_NAME}' GRANT ADMIN ROLE;`
       );
     }
 
@@ -502,6 +570,7 @@ const main = async () => {
       missing_impuestos,
       missing_impuestos_art,
       missing_usuarios,
+      missing_juegos_det,
       dif_Claves,
       dif_articulos,
       dif_grupos_lineas,
@@ -511,6 +580,7 @@ const main = async () => {
       dif_impuestos,
       dif_impuestos_art,
       dif_usuarios,
+      diff_juegos_det,
       del_Claves,
       del_articulos,
       del_grupos_lineas,
@@ -520,6 +590,7 @@ const main = async () => {
       del_impuestos,
       del_impuestos_art,
       del_usuarios,
+      del_juegos_det,
     });
     console.log("done");
   } catch (error) {
@@ -535,12 +606,35 @@ const deleteRows = async (rows, tableName, keyName, dbJcontrol) => {
         `DELETE FROM CLAVES_ARTICULOS WHERE ${keyName} = ${row[keyName]};`
       );
     }
-    await query(
-      dbJcontrol,
-      `DELETE FROM ${tableName} WHERE ${keyName + "_MICROSIP"} = ${
-        row[keyName + "_MICROSIP"]
-      };`
-    );
+    if (tableName.toLowerCase() != "juegos_det") {
+      try {
+        await query(
+          dbJcontrol,
+          `DELETE FROM ${tableName} WHERE ${keyName + "_MICROSIP"} = ${
+            row[keyName + "_MICROSIP"]
+          };`
+        );
+      } catch (error) {
+        console.log(error);
+        console.log(
+          `DELETE FROM ${tableName} WHERE ${keyName + "_MICROSIP"} = ${
+            row[keyName + "_MICROSIP"]
+          };`
+        );
+      }
+    } else {
+      try {
+        await query(
+          dbJcontrol,
+          `DELETE FROM ${tableName} WHERE COMPONENTE_ID_MICROSIP = ${row["COMPONENTE_ID_MICROSIP"]};`
+        );
+      } catch (error) {
+        console.log(error);
+        console.log(
+          `DELETE FROM ${tableName} WHERE COMPONENTE_ID_MICROSIP = ${row["COMPONENTE_ID_MICROSIP"]};`
+        );
+      }
+    }
   }
 };
 
@@ -551,7 +645,12 @@ const updateRows = async (rows, tableName, keyName, dbJcontrol) => {
       diff,
       `${keyName + "_MICROSIP"}=${diff[keyName + "_MICROSIP"]}`
     );
-    await query(dbJcontrol, query_str);
+    try {
+      await query(dbJcontrol, query_str);
+    } catch (error) {
+      console.log(error);
+      console.log(query_str);
+    }
   }
 };
 
@@ -569,16 +668,24 @@ const createRows = async (rows, tableName, dbJcontrol, id_keyName) => {
       };
     }
 
-    missing[id_keyName + "_MICROSIP"] = missing[id_keyName];
-    missing[id_keyName] =
-      (
-        await query(
-          dbJcontrol,
-          `SELECT COALESCE(MAX(${id_keyName}), 0) AS MaximoID FROM ${tableName};`
-        )
-      )[0].MAXIMOID + 1;
+    if (tableName.toLowerCase() != "juegos_det") {
+      missing[id_keyName + "_MICROSIP"] = missing[id_keyName];
+      missing[id_keyName] =
+        (
+          await query(
+            dbJcontrol,
+            `SELECT COALESCE(MAX(${id_keyName}), 0) AS MaximoID FROM ${tableName};`
+          )
+        )[0].MAXIMOID + 1;
+    }
+
     const query_str = objectToSqlInsertArticulo(tableName, missing);
-    await query(dbJcontrol, query_str);
+    try {
+      await query(dbJcontrol, query_str);
+    } catch (error) {
+      console.log(error);
+      console.log(query_str);
+    }
   }
 };
 
